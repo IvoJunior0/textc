@@ -1,0 +1,5 @@
+Arquivo teste de leitura, modificação e criação.
+Linguagem C
+
+
+NVIM.!
