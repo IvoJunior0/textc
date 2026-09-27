@@ -10,7 +10,7 @@ int main(void)
 	char data[1000];
 	char option;
 
-	printf("O que fazer com o arquivo? (w = escrever; r = ler)");
+	printf("O que fazer com o arquivo? (w = escrever; r = ler): ");
 	scanf(" %c", &option);
 	getchar();
 
@@ -26,12 +26,11 @@ int main(void)
 		if (fptr == NULL)
 		{
 			printf("Arquivo não foi aberto.\n");
-			fclose(fptr);
 			return 0;
 		}
 		
 		char result[10000];
-		while(fgets(result, 10000, fptr))
+		while(fgets(result, sizeof result, fptr) != NULL)
 		{
 			printf("%s", result);
 		}
@@ -48,25 +47,24 @@ int main(void)
 
 		if (fptr == NULL)
 		{
-			printf("Arquivo não foi aberto.\n");
-			fclose(fptr);
-			return 0;
+			perror("Arquivo não foi aberto.\n");
+			return 1;
 		}
 
 		printf("Conteúdo:\n");
-		data[0] = '\0';
-		size_t pos = 0;
-		while (pos < sizeof(data) - 1 && fgets(data + pos, sizeof(data) - pos, fptr) != NULL) {
-    			pos = strlen(data);
+		
+		if (fgets(data, sizeof data, stdin) != NULL)
+		{
+			fputs(data, fptr);
 		}
 
-		fprintf(fptr, data);
+		fclose(fptr);
 	}
 	else
 	{
 		printf("Opção inválida.");
-		return 0;
+		return 1;
 	}
-	fclose(fptr);
+
 	return 0;
 }
