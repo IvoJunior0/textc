@@ -1,31 +1,27 @@
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 
-int main(void)
+// argv[1]: filename.
+// argv[2]: option.
+int main(int argc, char *argv[])
 {
 	FILE *fptr;
-	char input[100];
 	char data[1000];
-	char option;
 
-	printf("O que fazer com o arquivo? (w = escrever; r = ler): ");
-	scanf(" %c", &option);
-	getchar();
-
-	if (option == 'r')
+	if (argc < 3)
 	{
-		printf("Documento a ser lido: ");
+		printf("Quantidade de argumentos inválida.\n");
+		return 0;
+	}
 
-		fgets(input, sizeof input, stdin);
-		input[strcspn(input, "\n")] = '\0';
-
-		fptr = fopen(input, "r");
+	if (argv[2][0] == 'r')
+	{
+		fptr = fopen(argv[1], "r");
 
 		if (fptr == NULL)
 		{
-			printf("Arquivo não foi aberto.\n");
+			perror("Arquivo não foi aberto.\n");
 			return 0;
 		}
 		
@@ -36,14 +32,9 @@ int main(void)
 		}
 		fclose(fptr);
 	}
-	else if (option == 'w')
+	else if (argv[2][0] == 'w')
 	{
-		printf("Nome do documento: ");
-
-		fgets(input, sizeof input, stdin);
-		input[strcspn(input, "\n")] = '\0';
-
-		fptr = fopen(input, "w");
+		fptr = fopen(argv[1], "w");
 
 		if (fptr == NULL)
 		{
@@ -62,9 +53,8 @@ int main(void)
 	}
 	else
 	{
-		printf("Opção inválida.");
+		printf("Opção inválida.\n");
 		return 1;
 	}
-
 	return 0;
 }
