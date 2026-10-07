@@ -1,60 +1,73 @@
-#include <stddef.h>
+/*** includes ***/
+
+#include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <termios.h>
+#include <unistd.h>
 
-// argv[1]: filename.
-// argv[2]: option.
+/*** defines ***/
+
+#define CTRL_KEY(k) ((k) & 0x1f)
+
+/*** data ***/
+
+struct termios orig_termios;
+
+/*** terminal ***/
+
+void die(const char *s)
+{
+	perror(s);
+	exit(1);
+}
+
+void disable_raw_mode()
+{
+	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios) == -1)
+	{
+		die("tcsetattr");
+	}
+}
+
+void enable_raw_mode()
+{
+	if (tcgetattr(STDIN_FILENO, &orig_termios) == -1) die("tcgetattr");
+	atexit(disable_raw_mode);
+
+	struct termios raw = orig_termios;
+	raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+	raw.c_oflag &= ~(OPOST);
+	raw.c_cflag |= (CS8);
+	raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+	raw.c_cc[VMIN] = 0;
+	raw.c_cc[VTIME]= 0;
+
+	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) die("tcsetattr");
+}
+
+/*** init ***/
+
 int main(int argc, char *argv[])
 {
-	FILE *fptr;
-	char data[1000];
+	enable_raw_mode();
 
-	if (argc < 3)
+	while (1)
 	{
-		printf("Quantidade de argumentos inválida.\n");
-		return 0;
-	}
+		char c;
+		if (read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN ) die("read");
 
-	if (argv[2][0] == 'r')
-	{
-		fptr = fopen(argv[1], "r");
-
-		if (fptr == NULL)
+		if (iscntrl(c))
 		{
-			perror("Arquivo não foi aberto.\n");
-			return 0;
+			printf("%d\r\n", c);
 		}
-		
-		char result[10000];
-		while(fgets(result, sizeof result, fptr) != NULL)
+		else
 		{
-			printf("%s", result);
-		}
-		fclose(fptr);
-	}
-	else if (argv[2][0] == 'w')
-	{
-		fptr = fopen(argv[1], "w");
-
-		if (fptr == NULL)
-		{
-			perror("Arquivo não foi aberto.\n");
-			return 1;
+			printf("%d ('%c')\r\n", c, c);
 		}
 
-		printf("Conteúdo:\n");
-		
-		if (fgets(data, sizeof data, stdin) != NULL)
-		{
-			fputs(data, fptr);
-		}
-
-		fclose(fptr);
-	}
-	else
-	{
-		printf("Opção inválida.\n");
-		return 1;
+		if (c == CTRL_KEY('q')) break;
 	}
 	return 0;
 }
